@@ -14,10 +14,16 @@ type (
 )
 
 func FromScript(s *automation.Script) *Script {
+	// default to the previous ctx timeout value (5s)
+	to := uint32(s.Timeout)
+	if to == 0 {
+		to = 5000
+	}
+
 	return &Script{
 		Source:  s.Source,
 		Name:    s.Name,
-		Timeout: uint32(s.Timeout),
+		Timeout: to,
 		Async:   s.Async,
 	}
 }

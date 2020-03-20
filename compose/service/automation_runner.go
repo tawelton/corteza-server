@@ -262,9 +262,6 @@ func (svc automationRunner) makeRecordScriptRunner(ctx context.Context, ns *type
 		// so we need to rewire the sentry panic recovery
 		defer sentry.Recover()
 
-		ctx, cancelFn := context.WithTimeout(ctx, time.Second*5)
-		defer cancelFn()
-
 		// Add invoker's or defined credentials/jwt
 		req.Config = map[string]string{
 			"api.jwt": svc.getJWT(ctx, script),
@@ -277,6 +274,9 @@ func (svc automationRunner) makeRecordScriptRunner(ctx context.Context, ns *type
 
 		// Add script info
 		req.Script = corredor.FromScript(script)
+
+		ctx, cancelFn := context.WithTimeout(ctx, time.Millisecond*time.Duration(req.Script.Timeout))
+		defer cancelFn()
 
 		rsp, err := svc.runner.Record(ctx, req, grpc.WaitForReady(script.Critical))
 
