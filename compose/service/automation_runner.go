@@ -275,7 +275,7 @@ func (svc automationRunner) makeRecordScriptRunner(ctx context.Context, ns *type
 		// Add script info
 		req.Script = corredor.FromScript(script)
 
-		ctx, cancelFn := context.WithTimeout(ctx, time.Millisecond*time.Duration(req.Script.Timeout))
+		ctx, cancelFn := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(req.Script.Timeout))
 		defer cancelFn()
 
 		rsp, err := svc.runner.Record(ctx, req, grpc.WaitForReady(script.Critical))
