@@ -1,0 +1,77 @@
+{
+  "Title": "Audit log",
+  "Interface": "Auditlog",
+  "Struct": [
+    {
+      "imports": [
+        "time"
+      ]
+    }
+  ],
+  "Parameters": null,
+  "Protocol": "",
+  "Authentication": null,
+  "Path": "/auditlog",
+  "APIs": [
+    {
+      "Name": "list",
+      "Method": "GET",
+      "Title": "Li",
+      "Path": "/",
+      "Parameters": {
+        "get": [
+          {
+            "name": "from",
+            "required": false,
+            "title": "From",
+            "type": "*time.Time"
+          },
+          {
+            "name": "to",
+            "required": false,
+            "title": "To",
+            "type": "*time.Time"
+          },
+          {
+            "name": "target",
+            "required": false,
+            "title": "Target",
+            "type": "string"
+          },
+          {
+            "name": "userID",
+            "required": false,
+            "title": "Filter by user",
+            "type": "uint64"
+          },
+          {
+            "name": "anonymous",
+            "required": false,
+            "title": "Filter by anonymous user",
+            "type": "bool"
+          },
+          {
+            "name": "limit",
+            "title": "Limit",
+            "type": "uint"
+          },
+          {
+            "name": "offset",
+            "title": "Offset",
+            "type": "uint"
+          },
+          {
+            "name": "page",
+            "title": "Page number (1-based)",
+            "type": "uint"
+          },
+          {
+            "name": "perPage",
+            "title": "Returned items per page (default 50)",
+            "type": "uint"
+          }
+        ]
+      }
+    }
+  ]
+}
