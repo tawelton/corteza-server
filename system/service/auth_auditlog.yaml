@@ -1,0 +1,114 @@
+# List of security/audit events and errors that we need to log
+
+target: system.service.auth
+service: auth
+
+meta:
+  - name: email
+  - name: userID
+    type: uint64
+  - name: credentialsType
+  - name: credentialsID
+    type: uint64
+  - name: roleID
+    type: uint64
+
+events:
+  success:
+    log: "user {email} successfully authenticated with {credentialsType}"
+
+  tokenIssued:
+    log: "token {credentialsType} issued for {email}"
+
+  passwordChangeCheck:
+    log: "user {email} successfully verified old password"
+
+  passwordChanged:
+    log: "user {email} changed his password"
+
+  internalSignup:
+    log: "user {email} created"
+
+  emailConfirmed:
+    log: "email confirmed"
+
+  externalSignup:
+    log: "user {email} created after successful external authentication via {credentialsType}"
+
+  emailConfirmationTokenSent:
+    log: "email confirmation notification sent to {email}"
+
+  passwordResetTokenSent:
+    log: "password reset token sent to {email}"
+
+  autoPromoted:
+    log: "user {email} auto-promoted to {role}"
+
+  credentialsUpdated:
+    log: "credentials {credentialsType} updated"
+
+  credentialsCreated:
+    log: "new credentials {credentialsType} created"
+
+  subscription:
+    error: "{err}"
+    log: "{err}"
+    severity: warning
+
+  invalidCredentials:
+    error: "invalid username and password combination"
+    log: "user {email} failed to authenticate with {credentialsType}"
+    severity: warning
+
+  invalidEmailFormat:
+    error: "invalid email"
+
+  invalidHandle:
+    error: "invalid handle"
+
+  failedForUnknownUser:
+    safe: invalidCredentials
+    log: "unknown user {email} tried to log-in with {credentialsType}"
+    severity: warning
+
+  failedForDisabledUser:
+    safe: invalidCredentials
+    log: "disabled user {email} tried to log-in with {credentialsType}"
+    severity: warning
+
+  failedUnconfirmedEmail:
+    error: "system requires confirmed email before logging in"
+    log: "user {email} tried to log-in with with unconfirmed email"
+
+  interalLoginDisabledByConfig:
+    error: "internal login (username/password) is disabled"
+
+  internalSignupDisabledByConfig:
+    error: "internal sign-up (username/password) is disabled"
+
+  passwodResetFailedOldPasswordCheckFailed:
+    error: "could not change password, old password does not match"
+
+  passwordResetDisabledByConfig:
+    error: "password reset is disabled"
+
+  passwordNotSecure:
+    error: "provided password is not secure; use longer password with more non-alphanumeric character"
+
+  externalDisabledByConfig:
+    error: "external authentication (using external authentication provider) is disabled"
+    log: "external authentication is disabled"
+    severity: warning
+
+  profileWithoutValidEmail:
+    error: "external authentication provider returned profile without valid email"
+    log: "external authentication provider {credentialsType} returned profile without valid email"
+    severity: warning
+
+  credentialsLinkedToInvalidUser:
+    error: "credentials {credentialsType} linked to disabled or deleted user {email}"
+    severity: warning
+
+  invalidToken:
+    error: "invalid token"
+    severity: warning

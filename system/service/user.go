@@ -56,7 +56,7 @@ type (
 	}
 
 	userAuth interface {
-		checkPasswordStrength(string) error
+		checkPasswordStrength(string) bool
 		changePassword(uint64, string) error
 	}
 
@@ -78,6 +78,10 @@ type (
 		FilterUsersWithUnmaskableEmail(ctx context.Context) *permissions.ResourceFilter
 		FilterUsersWithUnmaskableName(ctx context.Context) *permissions.ResourceFilter
 	}
+
+	// Temp types to support user.Preloader
+	userIdGetter func(chan uint64)
+	userSetter   func(*types.User) error
 
 	UserService interface {
 		With(ctx context.Context) UserService
@@ -101,6 +105,8 @@ type (
 		Undelete(id uint64) error
 
 		SetPassword(userID uint64, password string) error
+
+		Preloader(userIdGetter, types.UserFilter, userSetter) error
 	}
 )
 
@@ -520,8 +526,8 @@ func (svc user) SetPassword(userID uint64, newPassword string) (err error) {
 		return ErrNoPermissions.withStack()
 	}
 
-	if err = svc.auth.checkPasswordStrength(newPassword); err != nil {
-		return
+	if svc.auth.checkPasswordStrength(newPassword) {
+		return errors.New("password too week")
 	}
 
 	return svc.db.Transaction(func() error {
@@ -544,6 +550,56 @@ func (svc user) handlePrivateData(u *types.User) {
 	if !svc.ac.CanUnmaskName(svc.ctx, u) {
 		u.Name = maskPrivateDataName
 	}
+}
+
+// Preloader collects all ids of users, loads them and sets them back
+//
+//
+// @todo this kind of preloader is useful and can be implemented in bunch
+//       of places and replace old code
+func (svc user) Preloader(g userIdGetter, f types.UserFilter, s userSetter) error {
+	var (
+		// channel that will collect the IDs in the getter
+		ch = make(chan uint64, 0)
+
+		// unique index for IDs
+		unq = make(map[uint64]bool)
+	)
+
+	// Reset the collection of the IDs
+	f.UserID = make([]uint64, 0)
+
+	// Call getter and collect the IDs
+	go g(ch)
+
+rangeLoop:
+	for {
+		select {
+		case <-svc.ctx.Done():
+			close(ch)
+			break rangeLoop
+		case id, ok := <-ch:
+			if !ok {
+				// Channel closed
+				break rangeLoop
+			}
+
+			if !unq[id] {
+				unq[id] = true
+				f.UserID = append(f.UserID, id)
+			}
+		}
+
+	}
+
+	// Load all users (even if deleted, suspended) from the given list of IDs
+	uu, _, err := svc.Find(f)
+
+	if err != nil {
+		return err
+	}
+
+	return uu.Walk(s)
 }
 
 func createHandle(r repository.UserRepository, u *types.User) {

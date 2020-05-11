@@ -2,17 +2,19 @@ package service
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza-server/pkg/store"
-	"github.com/cortezaproject/corteza-server/pkg/store/minio"
-	"github.com/cortezaproject/corteza-server/pkg/store/plain"
 
 	"go.uber.org/zap"
 
 	"github.com/cortezaproject/corteza-server/pkg/app/options"
+	"github.com/cortezaproject/corteza-server/pkg/auditlog"
+	auditlogRepository "github.com/cortezaproject/corteza-server/pkg/auditlog/repository"
 	intAuth "github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/eventbus"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 	"github.com/cortezaproject/corteza-server/pkg/settings"
+	"github.com/cortezaproject/corteza-server/pkg/store"
+	"github.com/cortezaproject/corteza-server/pkg/store/minio"
+	"github.com/cortezaproject/corteza-server/pkg/store/plain"
 	"github.com/cortezaproject/corteza-server/system/repository"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
@@ -74,6 +76,8 @@ var (
 	// CurrentSettings represents current system settings
 	CurrentSettings = &types.Settings{}
 
+	DefaultAuditLog auditlog.Recorder
+
 	DefaultSink *sink
 
 	DefaultAuth         AuthService
@@ -103,6 +107,12 @@ func Initialize(ctx context.Context, log *zap.Logger, c Config) (err error) {
 		DefaultLogger,
 		DefaultAccessControl,
 		CurrentSettings,
+	)
+
+	DefaultAuditLog = auditlog.NewService(
+		auditlogRepository.Mysql(repository.DB(ctx), "sys_auditlog"),
+		log,
+		log,
 	)
 
 	if DefaultStore == nil {
